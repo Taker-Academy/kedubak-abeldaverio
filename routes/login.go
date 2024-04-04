@@ -5,7 +5,6 @@ import (
 	"KeDuBack/token"
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"io"
@@ -35,7 +34,8 @@ func login(database *mongo.Client) gin.HandlerFunc {
 	fn := func(ctx *gin.Context) {
 		json_data, err := io.ReadAll(ctx.Request.Body)
 		if err != nil {
-			panic(err)
+			ctx.JSON(http.StatusInternalServerError, err)
+			return
 		}
 		var tmp login_infos
 		json.Unmarshal(json_data, &tmp)
@@ -50,13 +50,14 @@ func login(database *mongo.Client) gin.HandlerFunc {
 		filter := bson.M{"email": tmp.Email}
 		var user database_user
 		err = collection.FindOne(context.Background(), filter).Decode(&user)
-		fmt.Println(user)
 		if err != nil {
 			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "email not found"})
+			return
 		}
 		hash_password := encrypt.Hash_sring(tmp.Password)
 		if hash_password != user.Password {
 			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "incorect password"})
+			return
 		}
 		to_return, err := get_login_response(user)
 		if err != nil {
