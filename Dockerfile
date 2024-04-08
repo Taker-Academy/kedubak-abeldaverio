@@ -10,4 +10,4 @@ RUN go build -o KeDuBack
 
 EXPOSE 8080
 
-RUN ["./KeDuBack"]
+CMD ["./KeDuBack"]
